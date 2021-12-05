@@ -65,20 +65,6 @@ public class PokeTree {
         return null;
     }
 
-    // to string method
-    public String toString() {
-        return toStringRecursive(root);
-    }
-
-    // recursive to string method
-    public String toStringRecursive(PokeNode node) {
-        String result = node.getName();
-        for (PokeNode child : node.getChildren()) {
-            result += " " + toStringRecursive(child);
-        }
-        return result;
-    }
-
     // method to use the recursive get leaves method to get the leaves of the tree
     // and set it to an arraylist
     // return an arraylist of pokenode objects
@@ -104,24 +90,15 @@ public class PokeTree {
         return node.getChildren().isEmpty();
     }
 
-    // method to get the parent of a pokemon
+    // method to get the parent of a pokemon non recursively
     public PokeNode getParent(PokeNode node) {
-        return getParentRecurse(root, node);
-    }
-
-    // recursive method to get the parent of a pokemon
-    private PokeNode getParentRecurse(PokeNode node, PokeNode child) {
-        if (node.getChildren().contains(child)) {
-            return node;
-        } else {
-            for (PokeNode childNode : node.getChildren()) {
-                PokeNode found = getParentRecurse(childNode, child);
-                if (found != null) {
-                    return found;
-                }
+        PokeNode parent = null;
+        for (PokeNode child : root.getChildren()) {
+            if (child.getChildren().contains(node)) {
+                parent = child;
             }
         }
-        return null;
+        return parent;
     }
 
     // method to get the siblings of a pokemon
@@ -136,30 +113,12 @@ public class PokeTree {
         return siblings;
     }
 
-    // method to get the children of a pokemon
+    // method to get all the children of a pokemon
     public ArrayList<PokeNode> getChildren(PokeNode node) {
         return node.getChildren();
     }
 
-    // method to get ancestors of a pokemon
-    public ArrayList<PokeNode> getAncestors(PokeNode node) {
-        ArrayList<PokeNode> ancestors = new ArrayList<PokeNode>();
-        getAncestorsRecurse(root, node, ancestors);
-        return ancestors;
-    }
-
-    // recursive method to get ancestors of a pokemon
-    private void getAncestorsRecurse(PokeNode node, PokeNode child, ArrayList<PokeNode> ancestors) {
-        if (node.getChildren().contains(child)) {
-            ancestors.add(node);
-        } else {
-            for (PokeNode childNode : node.getChildren()) {
-                getAncestorsRecurse(childNode, child, ancestors);
-            }
-        }
-    }
-
-    // method to get descendants of a pokemon
+    //get descendants of a pokemon not including the pokemon itself in the list
     public ArrayList<PokeNode> getDescendants(PokeNode node) {
         ArrayList<PokeNode> descendants = new ArrayList<PokeNode>();
         getDescendantsRecurse(node, descendants);
@@ -168,50 +127,29 @@ public class PokeTree {
 
     // recursive method to get descendants of a pokemon
     private void getDescendantsRecurse(PokeNode node, ArrayList<PokeNode> descendants) {
-        descendants.add(node);
         for (PokeNode child : node.getChildren()) {
+            descendants.add(child);
             getDescendantsRecurse(child, descendants);
         }
     }
 
-    // use recursive method to get the height of the tree
-    public int getHeight() {
-        return recursiveGetHeight(root);
+
+
+    //method to get max height of the tree -- number of nodes along the longest path from the root node
+    public int getMaxHeight() {
+        return getMaxHeightRecurse(root);
     }
 
-    // recursive method to get the height
-    private int recursiveGetHeight(PokeNode pokemon) {
-        if (pokemon == null) {
-            return 0;
-        } else {
-            int max = 0;
-            for (PokeNode child : pokemon.getChildren()) {
-                int height = recursiveGetHeight(child);
-                if (height > max) {
-                    max = height;
-                }
-            }
-            return max + 1;
-        }
-    }
-
-    // method to get all subtrees of a pokemon
-    public ArrayList<PokeTree> getSubtrees() {
-        ArrayList<PokeTree> subtrees = new ArrayList<PokeTree>();
-        getSubtreesRecurse(root, subtrees);
-        return subtrees;
-    }
-
-    // recursive method to get all subtrees of a pokemon
-    private void getSubtreesRecurse(PokeNode node, ArrayList<PokeTree> subtrees) {
-        PokeTree tree = new PokeTree();
-        tree.addChild(tree.root, node.getName());
+    //find the height by ocunting the number of nodes in the longest path from the root node
+    private int getMaxHeightRecurse(PokeNode node) {
+        int count = 0;
         for (PokeNode child : node.getChildren()) {
-            tree.addChild(tree.root, child.getName());
-            getSubtreesRecurse(child, subtrees);
+            count = Math.max(count, getMaxHeightRecurse(child));
         }
-        subtrees.add(tree);
+        return count + 1;
     }
+
+
 
     // to string method for the tree
     public String toStringTree() {
@@ -278,13 +216,6 @@ public class PokeTree {
         tree.addChild(tree.find("Kyogre"), "Manaphy");
         tree.addChild(tree.find("Kyogre"), "Phione");
 
-        // get ancestors of manaphy
-        ArrayList<PokeNode> ancestors = tree.getAncestors(tree.find("Manaphy"));
-        System.out.println("Ancestors of Manaphy: ");
-        for (PokeNode ancestor : ancestors) {
-            System.out.print(ancestor.getName() + " ");
-        }
-        System.out.println("\n");
 
         // get the descendants of palkia
         ArrayList<PokeNode> descendants = tree.getDescendants(tree.find("Palkia"));
@@ -294,6 +225,10 @@ public class PokeTree {
         }
         System.out.println("\n");
 
+        //find the parent of pikachu
+        PokeNode parent = tree.getParent(tree.find("Pikachu"));
+        System.out.println("Parent of Pikachu: " + parent.getName());
+
         // print the siblings of zekrom
         ArrayList<PokeNode> siblings = tree.getSiblings(tree.find("Zekrom"));
         System.out.println("Siblings of Zekrom: ");
@@ -302,16 +237,20 @@ public class PokeTree {
         }
         System.out.println("\n");
 
-        // get the parent of rayquaza
-        PokeNode parent = tree.getParent(tree.find("Rayquaza"));
-        System.out.println("Parent of Rayquaza: " + parent.getName());
+
+        //gets all the children of kyogre
+        ArrayList<PokeNode> children = tree.getChildren(tree.find("Kyogre"));
+        System.out.println("Children of Kyogre: ");
+        for (PokeNode child : children) {
+            System.out.println(child.getName() + " ");
+        }
         System.out.println("\n");
 
         // print height
-        System.out.println("The Height of the PokeTree is: " + tree.getHeight());
+        System.out.println("The Height of the PokeTree is: " + tree.getMaxHeight());
         System.out.println("\n");
 
-        // print leaves
+        //print leaves
         System.out.println("All PokeNodes that are Leaves: ");
         ArrayList<PokeNode> leaves = tree.getLeaves();
         for (PokeNode leaf : leaves) {
@@ -324,13 +263,7 @@ public class PokeTree {
         System.out.println(tree.toStringTree());
         System.out.println("\n");
 
-        // print subtrees
-        System.out.println("All Subtrees: ");
-        ArrayList<PokeTree> subtrees = tree.getSubtrees();
-        for (PokeTree subtree : subtrees) {
-            System.out.print(subtree.toStringTree() + "\n");
-            System.out.println("");
-        }
+
     }
 
 }
